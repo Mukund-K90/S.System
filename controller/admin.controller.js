@@ -1,6 +1,8 @@
 const Admin = require("../model/admin.model")
 const bcrypt = require('bcrypt');
+const { cookie } = require("express/lib/response");
 const jwt = require('jsonwebtoken');
+const Token = require("../model/token.model");
 const blacklist = new Set();
 
 
@@ -20,13 +22,22 @@ async function adminLogin(req, res) {
                 const token = jwt.sign({ userId: admin._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
                 admin.token = token;
                 admin.save();
-                console.log(res.status(200).send({
-                    code: 200,
-                    success: true,
-                    message: "Login in successfully",
-                    data: admin,
-                    token: token
-                }));
+                const savedToken = new Token({
+                    userId: admin._id,
+                    token: token,
+                });
+                savedToken.save();
+                // console.log(res.status(200).send({
+                //     code: 200,
+                //     success: true,
+                //     message: "Login in successfully",
+                //     data: admin,
+                //     token: token
+                // }));
+                return res.cookie("admin_access", token, {
+                    httpOnly: true,
+                }).status(200)
+                    .json({ message: "Logged in successfully", token: token });
             }
         }
     } catch (error) {
@@ -40,15 +51,19 @@ async function adminLogin(req, res) {
 //logout by add token in blacklist
 async function adminLogOut(req, res) {
     try {
-        const token = req.headers.authorization.split(" ")[1];
-        if (token) {
-            blacklist.add(token);
+        const token = req.cookies.admin_access;
+        if (!token) {
+            return res.status(400).json({ message: "Invalid token, Logout Failed" });
         }
-        res.json({ message: 'Logout successful.' });
+        res.clearCookie("admin_access")
+            .status(200)
+            .json({ message: "Successfully logged out" });
     } catch (error) {
-        res.status(400).send({ message: "Invalid token " });
+        console.error(error);
+        res.status(500).send({ message: "An error occurred during logout" });
     }
 }
+
 
 module.exports = {
     adminLogin,

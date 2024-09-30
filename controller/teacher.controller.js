@@ -54,7 +54,6 @@ async function teacherRegister(req, res) {
     }
 }
 
-
 //Update
 async function teacherUpdate(req, res) {
     // const token = req.params.token;
@@ -118,7 +117,7 @@ async function teacherList(req, res) {
     // const token = req.params.token;
     // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
     // const user = await Student.findById(decodeToken.userId);
-    const teacher = await Teacher.find();
+    const teacher = await Teacher.find().sort({ createdAt: -1 });
     if (!teacher) {
         return res.status(400).send(`teacher Not found. Please check and try again`);
     }
@@ -163,7 +162,7 @@ async function teacherSearch(req, res) {
     }
 
     try {
-        const teachers = await Teacher.find(query);
+        const teachers = await Teacher.find(query).sort({ createdAt: -1 });
 
         if (teachers.length === 0) {
             return res.status(404).send("No teachers found matching the criteria.");
@@ -182,6 +181,7 @@ async function teacherSearch(req, res) {
         });
     }
 }
+
 // //Delete
 async function teacherDelete(req, res) {
     // const token = req.params.token;

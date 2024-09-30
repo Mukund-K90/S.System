@@ -59,7 +59,6 @@ async function studentRegister(req, res) {
     }
 }
 
-
 //Update
 async function studentUpdate(req, res) {
     // const token = req.params.token;
@@ -124,7 +123,7 @@ async function studentList(req, res) {
     // const token = req.params.token;
     // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
     // const user = await Student.findById(decodeToken.userId);
-    const student = await Student.find();
+    const student = await Student.find().sort({ createdAt: -1 });
     if (!student) {
         return res.status(400).send(`student Not found. Please check and try again`);
     }
@@ -142,9 +141,7 @@ async function studentList(req, res) {
                 message: error.message,
             });
         }
-
     }
-
 }
 
 //Search Student
@@ -166,10 +163,10 @@ async function studentSearch(req, res) {
     if (phone) {
         query.phone = { $regex: phone, $options: 'i' };
     }
-    if (Object.keys(query).length===0) {
+    if (Object.keys(query).length === 0) {
         return res.status(400).send("At least one search parameter is required.");
     }
-    const user = await Student.find(query);
+    const user = await Student.find(query).sort({ createdAt: -1 });
     if (!user) {
         return res.status(400).send(`User Not found. Please check and try again`);
     }
