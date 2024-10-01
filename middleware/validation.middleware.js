@@ -5,7 +5,7 @@ async function studentValidate(req, res, next) {
         firstName: joi.string().required().min(2).max(50),
         lastName: joi.string().required().min(2).max(50),
         dob: joi.string().required(),
-        gender: joi.string().valid('male', 'female').required(),
+        gender: joi.string().valid('male', 'female','others').required(),
         email: joi.string().required().email({
             minDomainSegments: 2,
             tlds: {
@@ -21,7 +21,6 @@ async function studentValidate(req, res, next) {
             motherOccupation: joi.string().optional(),
         }).required(),
         address: joi.string().required().max(50),
-        password: joi.string().required().pattern(new RegExp('^[a-zA-Z0-9]{6,30}$')).min(6).max(15) 
     });
 
     const { error } = studentSchema.validate(req.body);
@@ -51,7 +50,6 @@ async function teacherValidate(req, res, next) {
         specialization:joi.string().required(),
         dob: joi.string().required(),
         dateOfJoining: joi.string().required(),
-        password: joi.string().required().pattern(new RegExp('^[a-zA-Z0-9]{6,30}$')).min(6).max(15) 
     });
 
     const { error } = teacherSchema.validate(req.body);

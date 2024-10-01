@@ -6,13 +6,18 @@ const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
 dotenv.config();
-const cors=require('cors');
+const cors = require('cors');
+
+const { format } = require('date-fns');
+morgan.token('date', () => {
+    return format(new Date(), 'EEE, dd MMM yyyy hh:mm a OOOO');
+});
 
 const accessLogStream = fs.createWriteStream(path.join(__dirname, 'LOGS', 'access.log'), {
     flags: 'a'
 });
 
-app.use(morgan(':remote-addr - :remote-user :status :method :url :date[web] :response-time ms ', { stream: accessLogStream }));
+// app.use(morgan(':remote-addr | :remote-user | :status :method :url | :date | :response-time ms ', { stream: accessLogStream }));
 
 
 app.use(cors());
@@ -28,16 +33,16 @@ app.use(cookieParser());
 connectDb();
 
 //Admin Route
-const adminRoute=require('./routes/admin.route');
-app.use('/v1/admin',adminRoute);
+const adminRoute = require('./routes/admin.route');
+app.use('/v1/admin', adminRoute);
 
 //Student Route
-const studentRoute=require('./routes/student.route');
-app.use('/v1/student',studentRoute);
+const studentRoute = require('./routes/student.route');
+app.use('/v1/student', studentRoute);
 
 //Teacher Route
-const teacherRoute=require('./routes/teacher.route');
-app.use('/v1/teacher',teacherRoute);
+const teacherRoute = require('./routes/teacher.route');
+app.use('/v1/teacher', teacherRoute);
 
 //Server
 const BASE_URL = process.env.BASE_URL;

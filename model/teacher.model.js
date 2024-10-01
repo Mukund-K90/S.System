@@ -33,14 +33,12 @@ const teacherSchema = new mongoose.Schema({
     },
     dateOfJoining: {
         type: String,
+        default:Date.now()
     },
     image: {
         type: String,
         default: null,
     },
-    password: {
-        type: String
-    }
 }, { timestamps: true });
 
 const Teacher = mongoose.model('teacher', teacherSchema);

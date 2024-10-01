@@ -8,8 +8,7 @@ const router = express.Router();
 router.post('/registration', authentication, teacherValidate, teacherController.teacherRegister);
 router.put('/update/:id', authentication, teacherController.teacherUpdate);
 router.post('/view/:id', authentication, teacherController.teacherView);
-router.get('/list', authentication, teacherController.teacherList);
-router.get('/search', authentication, teacherController.teacherSearch);
+router.get('/list', authentication, teacherController.teachersFetch);
 router.delete('/delete/:id', authentication, teacherController.teacherDelete);
 
 module.exports = router;

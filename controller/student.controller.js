@@ -19,12 +19,10 @@ async function studentRegister(req, res) {
                 phone,
                 guardianDetails,
                 address,
-                password
             } = req.body;
 
             const { fatherName, fatherOccupation, motherName, motherOccupation } = guardianDetails;
 
-            const hashedPassword = await bcrypt.hash(password, 10);
             const student = new Student({
                 firstName,
                 lastName,
@@ -40,7 +38,6 @@ async function studentRegister(req, res) {
                     motherOccupation,
                 },
                 address,
-                password: hashedPassword
             });
 
             await student.save();
@@ -118,34 +115,8 @@ async function studentView(req, res) {
 
 }
 
-//List
-async function studentList(req, res) {
-    // const token = req.params.token;
-    // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
-    // const user = await Student.findById(decodeToken.userId);
-    const student = await Student.find().sort({ createdAt: -1 });
-    if (!student) {
-        return res.status(400).send(`student Not found. Please check and try again`);
-    }
-    else {
-        try {
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "Student List Fetched Successfully",
-                data: student
-            })
-        } catch (error) {
-            res.status(500).send({
-                success: false,
-                message: error.message,
-            });
-        }
-    }
-}
-
 //Search Student
-async function studentSearch(req, res) {
+async function studentFetch(req, res) {
     // const token = req.params.token;
     // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
     // const user = await Student.findById(decodeToken.userId);
@@ -164,22 +135,36 @@ async function studentSearch(req, res) {
         query.phone = { $regex: phone, $options: 'i' };
     }
     if (Object.keys(query).length === 0) {
-        return res.status(400).send("At least one search parameter is required.");
+        const student = await Student.find().sort({ createdAt: -1 });
+        if (!student || student.length === 0) {
+            return res.status(400).send(`students Not found. Please check and try again`);
+        }
+        try {
+            return res.status(200).send({
+                code: 200,
+                success: true,
+                message: `Student List fetched Successfully`,
+                data: student
+            })
+        } catch (error) {
+            res.status(500).send({
+                success: false,
+                message: error.message,
+            });
+        }
     }
-    const user = await Student.find(query).sort({ createdAt: -1 });
-    if (!user) {
-        return res.status(400).send(`User Not found. Please check and try again`);
-    }
-    if (user.length === 0) {
-        return res.status(404).send("No students found matching the criteria.");
-    }
+
     else {
+        const student = await Student.find(query).sort({ createdAt: -1 });
+        if (!student || student.length === 0) {
+            return res.status(400).send(`student Not found matching the criteria.`);
+        }
         try {
             return res.status(200).send({
                 code: 200,
                 success: true,
                 message: `Student Searched Successfully`,
-                data: user
+                data: student
             })
         } catch (error) {
             res.status(500).send({
@@ -225,7 +210,6 @@ module.exports = {
     studentRegister,
     studentUpdate,
     studentView,
-    studentList,
-    studentSearch,
+    studentFetch,
     studentDelete
 }

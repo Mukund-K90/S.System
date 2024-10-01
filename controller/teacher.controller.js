@@ -20,10 +20,8 @@ async function teacherRegister(req, res) {
                 specialization,
                 dob,
                 dateOfJoining,
-                password
             } = req.body;
 
-            const hashedPassword = await bcrypt.hash(password, 10);
             const teacher = new Teacher({
                 firstName,
                 lastName,
@@ -35,7 +33,6 @@ async function teacherRegister(req, res) {
                 specialization,
                 dob,
                 dateOfJoining,
-                password: hashedPassword
             });
 
             await teacher.save();
@@ -112,36 +109,8 @@ async function teacherView(req, res) {
 
 }
 
-// //List
-async function teacherList(req, res) {
-    // const token = req.params.token;
-    // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
-    // const user = await Student.findById(decodeToken.userId);
-    const teacher = await Teacher.find().sort({ createdAt: -1 });
-    if (!teacher) {
-        return res.status(400).send(`teacher Not found. Please check and try again`);
-    }
-    else {
-        try {
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "Teacher List Fetched Successfully",
-                data: teacher
-            })
-        } catch (error) {
-            res.status(500).send({
-                success: false,
-                message: error.message,
-            });
-        }
-
-    }
-
-}
-
 // //Search Teacher
-async function teacherSearch(req, res) {
+async function teachersFetch(req, res) {
     const { firstName, lastName, email, specialization } = req.query;
     const query = {};
     if (firstName) {
@@ -156,29 +125,45 @@ async function teacherSearch(req, res) {
     if (specialization) {
         query.specialization = { $regex: specialization, $options: 'i' };
     }
-
     if (Object.keys(query).length === 0) {
-        return res.status(400).send("At least one search parameter is required.");
-    }
+        try {
+            const teachers = await Teacher.find().sort({ createdAt: -1 });
 
-    try {
-        const teachers = await Teacher.find(query).sort({ createdAt: -1 });
+            if (!teachers || teachers.length === 0) {
+                return res.status(404).send("No teachers found !");
+            }
 
-        if (teachers.length === 0) {
-            return res.status(404).send("No teachers found matching the criteria.");
+            return res.status(200).send({
+                code: 200,
+                success: true,
+                message: "Teacher searched successfully.",
+                data: teachers
+            });
+        } catch (error) {
+            return res.status(500).send({
+                success: false,
+                message: error.message,
+            });
         }
-
-        return res.status(200).send({
-            code: 200,
-            success: true,
-            message: "Teacher searched successfully.",
-            data: teachers
-        });
-    } catch (error) {
-        return res.status(500).send({
-            success: false,
-            message: error.message,
-        });
+    }
+    else {
+        try {
+            const teachers = await Teacher.find(query).sort({ createdAt: -1 });
+            if (!teachers || teachers.length === 0) {
+                return res.status(404).send("No teachers found matching the criteria.");
+            }
+            return res.status(200).send({
+                code: 200,
+                success: true,
+                message: "Teacher searched successfully.",
+                data: teachers
+            });
+        } catch (error) {
+            return res.status(500).send({
+                success: false,
+                message: error.message,
+            });
+        }
     }
 }
 
@@ -215,7 +200,6 @@ module.exports = {
     teacherRegister,
     teacherUpdate,
     teacherView,
-    teacherList,
-    teacherSearch,
+    teachersFetch,
     teacherDelete
 }
