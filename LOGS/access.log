@@ -1,0 +1,4 @@
+::ffff:192.168.1.4 | - | 200 GET /v1/student/list | Thu, 03 Oct 2024 11:11 AM GMT+05:30 | 21.660 ms 
+::ffff:192.168.1.5 | - | 204 OPTIONS /v1/teacher/list | Thu, 03 Oct 2024 11:18 AM GMT+05:30 | 0.599 ms 
+::ffff:192.168.1.5 | - | 401 GET /v1/teacher/list | Thu, 03 Oct 2024 11:18 AM GMT+05:30 | 3.121 ms 
+::ffff:192.168.1.4 | - | 401 GET /v1/teacher/list | Thu, 03 Oct 2024 11:20 AM GMT+05:30 | 15.881 ms 

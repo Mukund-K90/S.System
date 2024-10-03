@@ -22,26 +22,51 @@ async function teacherRegister(req, res) {
                 dateOfJoining,
             } = req.body;
 
-            const teacher = new Teacher({
-                firstName,
-                lastName,
-                email,
-                countryCode: `+${countryCode}`,
-                phone,
-                campusId,
-                qualification,
-                specialization,
-                dob,
-                dateOfJoining,
-            });
+            if (teacher.isDelete === true) {
+                const teacher = await Teacher.findOneAndUpdate(
+                    { email: email }, {
+                    firstName,
+                    lastName,
+                    email,
+                    countryCode: `+${countryCode}`,
+                    phone,
+                    campusId,
+                    qualification,
+                    specialization,
+                    dob,
+                    dateOfJoining,
+                });
 
-            await teacher.save();
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "Teacher Registration Successfully",
-                data: teacher
-            });
+                await teacher.save();
+                return res.status(200).send({
+                    code: 200,
+                    success: true,
+                    message: "Teacher Registration Successfully",
+                    data: teacher._id
+                });
+            }
+            else {
+                const teacher = new Teacher({
+                    firstName,
+                    lastName,
+                    email,
+                    countryCode: `+${countryCode}`,
+                    phone,
+                    campusId,
+                    qualification,
+                    specialization,
+                    dob,
+                    dateOfJoining,
+                });
+
+                await teacher.save();
+                return res.status(200).send({
+                    code: 200,
+                    success: true,
+                    message: "Teacher Registration Successfully",
+                    data: teacher
+                });
+            }
         } catch (error) {
             res.status(500).send({
                 success: false,
