@@ -26,7 +26,7 @@ async function teacherRegister(req, res) {
                 firstName,
                 lastName,
                 email,
-                countryCode,
+                countryCode: `+${countryCode}`,
                 phone,
                 campusId,
                 qualification,
@@ -57,18 +57,26 @@ async function teacherUpdate(req, res) {
     // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
     // const user = await Teacher.findById(decodeToken.userId);
     const id = req.params.id;
+    const updateData = req.body;
     const teacher = await Teacher.findById(id);
     if (!teacher) {
-        return res.status(400).send(`teacher Not found. Please check and try again`);
+        return res.status(400).send(`Teacher Not found. Please check and try again`);
     }
     else {
         try {
-            const teacher = await Teacher.findOneAndUpdate({ _id: id }, req.body, { new: true });
+            const updatedTeacher = await Teacher.findByIdAndUpdate(
+                id,
+                updateData,
+                { new: true, select: 'updatedAt' }
+            );
             return res.status(200).send({
                 code: 200,
                 success: true,
                 message: "Teacher Updated Successfully",
-                data: teacher
+                data: {
+                    _id: updatedTeacher._id,
+                    updatedAt: updatedTeacher.updatedAt,
+                }
             })
         } catch (error) {
             res.status(500).send({
@@ -96,7 +104,17 @@ async function teacherView(req, res) {
                 code: 200,
                 success: true,
                 message: "Teacher Fetched Successfully",
-                data: teacher
+                data: {
+                    id: teacher._id,
+                    name: `${teacher.firstName} ${teacher.lastName}`,
+                    dob: teacher.dob,
+                    email: teacher.email,
+                    mobile: `${teacher.countryCode}${teacher.phone}`,
+                    qualification: teacher.qualification,
+                    specialization: teacher.specialization,
+                    address: teacher.address,
+                    dateOfJoining:teacher.dateOfJoining,
+                }
             })
         } catch (error) {
             res.status(500).send({
@@ -109,62 +127,38 @@ async function teacherView(req, res) {
 
 }
 
-// //Search Teacher
+// //List Teacher
 async function teachersFetch(req, res) {
-    const { firstName, lastName, email, specialization } = req.query;
-    const query = {};
-    if (firstName) {
-        query.firstName = { $regex: firstName, $options: 'i' };
-    }
-    if (lastName) {
-        query.lastName = { $regex: lastName, $options: 'i' };
-    }
-    if (email) {
-        query.email = { $regex: email, $options: 'i' };
-    }
-    if (specialization) {
-        query.specialization = { $regex: specialization, $options: 'i' };
-    }
-    if (Object.keys(query).length === 0) {
-        try {
-            const teachers = await Teacher.find().sort({ createdAt: -1 });
 
-            if (!teachers || teachers.length === 0) {
-                return res.status(404).send("No teachers found !");
-            }
+    try {
+        const teachers = await Teacher.find().sort({ createdAt: -1 });
+        if (!teachers || teachers.length === 0) {
+            return res.status(404).send("No teachers found !");
+        }
 
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "Teacher searched successfully.",
-                data: teachers
-            });
-        } catch (error) {
-            return res.status(500).send({
-                success: false,
-                message: error.message,
-            });
-        }
+        const formattedTeachers = teachers.map(teacher => ({
+            id: teacher._id,
+            name: `${teacher.firstName} ${teacher.lastName}`,
+            dob: teacher.dob,
+            email: teacher.email,
+            mobile: `${teacher.countryCode}${teacher.phone}`,
+            qualification: teacher.qualification,
+            specialization: teacher.specialization,
+            address: teacher.address,
+        }));
+        return res.status(200).send({
+            code: 200,
+            success: true,
+            message: "Teacher Fetched successfully.",
+            data: formattedTeachers
+        });
+    } catch (error) {
+        return res.status(500).send({
+            success: false,
+            message: error.message,
+        });
     }
-    else {
-        try {
-            const teachers = await Teacher.find(query).sort({ createdAt: -1 });
-            if (!teachers || teachers.length === 0) {
-                return res.status(404).send("No teachers found matching the criteria.");
-            }
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "Teacher searched successfully.",
-                data: teachers
-            });
-        } catch (error) {
-            return res.status(500).send({
-                success: false,
-                message: error.message,
-            });
-        }
-    }
+
 }
 
 // //Delete

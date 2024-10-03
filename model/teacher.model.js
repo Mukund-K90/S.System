@@ -33,13 +33,30 @@ const teacherSchema = new mongoose.Schema({
     },
     dateOfJoining: {
         type: String,
-        default:Date.now()
     },
     image: {
         type: String,
         default: null,
     },
-}, { timestamps: true });
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now,
+    },
+});
+
+teacherSchema.pre('save', function (next) {
+    this.updatedAt = Date.now();
+    next();
+});
+
+teacherSchema.pre(['updateOne', 'findOneAndUpdate'], function (next) {
+    this.set({ updatedAt: Date.now() });
+    next();
+});
 
 const Teacher = mongoose.model('teacher', teacherSchema);
 

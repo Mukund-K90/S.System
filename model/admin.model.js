@@ -8,10 +8,6 @@ const adminSchema = new mongoose.Schema({
     password: {
         type: String,
     },
-    token: {
-        type: String,
-        default: null,
-    }
 });
 
 const Admin = mongoose.model('admin', adminSchema);

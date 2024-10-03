@@ -20,24 +20,23 @@ async function adminLogin(req, res) {
             }
             else {
                 const token = jwt.sign({ userId: admin._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-                admin.token = token;
-                admin.save();
-                const savedToken = new Token({
-                    userId: admin._id,
-                    token: token,
+                const checkToken = await Token.findOne({ userId: admin._id });
+                if (!checkToken) {
+                    const savedToken = new Token({
+                        userId: admin._id,
+                        token: token,
+                    });
+                    savedToken.save();
+                }
+                else {
+                    const updateToken = await Token.findOneAndUpdate({ userId: admin._id }, { token: token }, { new: true });
+                }
+                res.status(200).send({
+                    code: 200,
+                    success: true,
+                    message: "Login successfully",
+                    token: token
                 });
-                savedToken.save();
-                // console.log(res.status(200).send({
-                //     code: 200,
-                //     success: true,
-                //     message: "Login in successfully",
-                //     data: admin,
-                //     token: token
-                // }));
-                return res.cookie("admin_access", token, {
-                    httpOnly: true,
-                }).status(200)
-                    .json({ message: "Logged in successfully", token: token });
             }
         }
     } catch (error) {
@@ -51,16 +50,17 @@ async function adminLogin(req, res) {
 //logout by add token in blacklist
 async function adminLogOut(req, res) {
     try {
-        const token = req.cookies.admin_access;
+        const token = req.headers.authorization?.split(" ")[1];
         if (!token) {
             return res.status(400).json({ message: "Invalid token, Logout Failed" });
         }
-        res.clearCookie("admin_access")
-            .status(200)
-            .json({ message: "Successfully logged out" });
+        const checkToken = await Token.findOneAndDelete({ token: token });
+        if (!checkToken) {
+            return res.status(401).send({ message: "logout failed! user not logged in anymore" });
+        }
+        res.status(200).send({ message: "Logout Successully!" });
     } catch (error) {
-        console.error(error);
-        res.status(500).send({ message: "An error occurred during logout" });
+        res.status(500).send({ success: false, message: error.message });
     }
 }
 

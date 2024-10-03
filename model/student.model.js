@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const userSchema = new mongoose.Schema({
+const studentSchema = new mongoose.Schema({
     firstName: {
         type: String,
     },
@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
     },
     countryCode: {
         type: String,
-        default: '91'
+        default: '+91'
     },
     phone: {
         type: String,
@@ -49,11 +49,29 @@ const userSchema = new mongoose.Schema({
     address: {
         type: String,
     },
-    password: {
-        type: String,
+    createdAt: {
+        type: Date,
+        default: Date.now,
     },
-}, { timestamps: true });
+    updatedAt: {
+        type: Date,
+        default: Date.now,
+    },
+    isDelete:{
+        type: Boolean,
+        default: false, 
+    }
+});
 
-const Student = mongoose.model('user', userSchema);
+studentSchema.pre('save', function (next) {
+    this.updatedAt = Date.now();
+    next();
+});
+
+studentSchema.pre(['updateOne', 'findOneAndUpdate'], function (next) {
+    this.set({ updatedAt: Date.now() });
+    next();
+});
+const Student = mongoose.model('Students', studentSchema);
 
 module.exports = Student;
