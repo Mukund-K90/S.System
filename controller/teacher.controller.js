@@ -5,7 +5,7 @@ const Teacher = require('../model/Teacher.model');
 //Insert Student
 async function teacherRegister(req, res) {
     const teacher = await Teacher.findOne({ email: req.body.email });
-    if (teacher) {
+    if (teacher && teacher.isDelete === false) {
         return res.status(400).send("teacher already exists. Please sign in.");
     } else {
         try {
@@ -59,7 +59,7 @@ async function teacherUpdate(req, res) {
     const id = req.params.id;
     const updateData = req.body;
     const teacher = await Teacher.findById(id);
-    if (!teacher) {
+    if (!teacher || teacher.isDelete === true) {
         return res.status(400).send(`Teacher Not found. Please check and try again`);
     }
     else {
@@ -95,7 +95,7 @@ async function teacherView(req, res) {
     // const user = await Student.findById(decodeToken.userId);
     const id = req.params.id;
     const teacher = await Teacher.findById(id);
-    if (!teacher) {
+    if (!teacher || teacher.isDelete === true) {
         return res.status(400).send(`teacher Not found. Please check and try again`);
     }
     else {
@@ -113,7 +113,7 @@ async function teacherView(req, res) {
                     qualification: teacher.qualification,
                     specialization: teacher.specialization,
                     address: teacher.address,
-                    dateOfJoining:teacher.dateOfJoining,
+                    dateOfJoining: teacher.dateOfJoining,
                 }
             })
         } catch (error) {
@@ -131,7 +131,7 @@ async function teacherView(req, res) {
 async function teachersFetch(req, res) {
 
     try {
-        const teachers = await Teacher.find().sort({ createdAt: -1 });
+        const teachers = await Teacher.find().sort({ createdAt: -1 }).where({ isDelete: false });
         if (!teachers || teachers.length === 0) {
             return res.status(404).send("No teachers found !");
         }
@@ -167,8 +167,11 @@ async function teacherDelete(req, res) {
     // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
     // const user = await Student.findById(decodeToken.userId);
     const id = req.params.id;
-    const teacher = await Teacher.findByIdAndDelete(id);
-    if (!teacher) {
+    const teacher = await Teacher.findByIdAndUpdate(
+        id,
+        { isDelete: true },
+        { new: true, select: 'updatedAt' }
+    ); if (!teacher || teacher.isDelete === true) {
         return res.status(400).send(`teacher Not found. Please check and try again`);
     }
     else {
@@ -177,7 +180,9 @@ async function teacherDelete(req, res) {
                 code: 200,
                 success: true,
                 message: "Teacher Deleted Successfully",
-                data: teacher
+                data: {
+                    id: id
+                }
             })
         } catch (error) {
             res.status(500).send({

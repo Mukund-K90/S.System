@@ -22,30 +22,60 @@ async function studentRegister(req, res) {
             } = req.body;
 
             const { fatherName, fatherOccupation, motherName, motherOccupation } = guardianDetails;
-            const student = new Student({
-                firstName,
-                lastName,
-                dob,
-                gender,
-                email,
-                countryCode: `+${countryCode}`,
-                phone,
-                guardianDetails: {
-                    fatherName,
-                    fatherOccupation,
-                    motherName,
-                    motherOccupation,
-                },
-                address,
-            });
-
-            await student.save();
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "Student Registration Successfully",
-                data: student
-            });
+            if (student.isDelete === true) {
+                const student = await Student.findOneAndUpdate(
+                    { email: email },
+                    {
+                        firstName,
+                        lastName,
+                        dob,
+                        gender,
+                        email,
+                        countryCode: `+${countryCode}`,
+                        phone,
+                        guardianDetails: {
+                            fatherName,
+                            fatherOccupation,
+                            motherName,
+                            motherOccupation,
+                        },
+                        address,
+                        isDelete: false
+                    });
+                await student.save();
+                return res.status(200).send({
+                    code: 200,
+                    success: true,
+                    message: "Student Registration Successfully",
+                    data: student._id
+                });
+            }
+            else {
+                const student = new Student(
+                    {
+                        firstName,
+                        lastName,
+                        dob,
+                        gender,
+                        email,
+                        countryCode: `+${countryCode}`,
+                        phone,
+                        guardianDetails: {
+                            fatherName,
+                            fatherOccupation,
+                            motherName,
+                            motherOccupation,
+                        },
+                        address,
+                    });
+                await student.save();
+                return res.status(200).send({
+                    code: 200,
+                    success: true,
+                    message: "Student Registration Successfully",
+                    data:  student._id
+                });
+            }
         } catch (error) {
             res.status(500).send({
                 success: false,
@@ -153,7 +183,7 @@ async function studentFetch(req, res) {
     //     query.phone = { $regex: phone, $options: 'i' };
     // }
     // if (Object.keys(query).length === 0) {
-    const student = await Student.find().sort({ createdAt: -1 });
+    const student = await Student.find().sort({ createdAt: -1 }).where({ isDelete: false });
     if (!student || student.length === 0 || student.isDelete === true) {
         return res.status(400).send(`students Not found. Please check and try again`);
     }
@@ -165,7 +195,6 @@ async function studentFetch(req, res) {
         email: s.email,
         mobile: `${s.countryCode}${s.phone}`,
         address: s.address,
-
     }));
     try {
         return res.status(200).send({
@@ -208,8 +237,11 @@ async function studentFetch(req, res) {
 //Delete
 async function studentDelete(req, res) {
     const id = req.params.id;
-    const student = await Student.findByIdAndUpdate(id, { isDelete: true }, { new: true });
-    if (!student || student.isDelete === true) {
+    const student = await Student.findByIdAndUpdate(
+        id,
+        { isDelete: true },
+        { new: true, select: 'updatedAt' }
+    ); if (!student || student.isDelete === true) {
         return res.status(400).send(`student Not found. Please check and try again`);
     }
     else {
@@ -219,7 +251,7 @@ async function studentDelete(req, res) {
                 success: true,
                 message: "Student Deleted Successfully",
                 data: {
-                    id: student._id
+                    id: id
                 }
             })
         } catch (error) {
@@ -230,7 +262,6 @@ async function studentDelete(req, res) {
         }
 
     }
-
 }
 
 module.exports = {

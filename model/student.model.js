@@ -49,6 +49,10 @@ const studentSchema = new mongoose.Schema({
     address: {
         type: String,
     },
+    isDelete: {
+        type: Boolean,
+        default: false,
+    },
     createdAt: {
         type: Date,
         default: Date.now,
@@ -57,10 +61,7 @@ const studentSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-    isDelete:{
-        type: Boolean,
-        default: false, 
-    }
+
 });
 
 studentSchema.pre('save', function (next) {
