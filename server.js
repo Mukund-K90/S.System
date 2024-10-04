@@ -44,6 +44,10 @@ app.use('/v1/student', studentRoute);
 const teacherRoute = require('./routes/teacher.route');
 app.use('/v1/teacher', teacherRoute);
 
+//Campus Route
+const campusRoute = require('./routes/campus.route');
+app.use('/v1/campus', campusRoute);
+
 //Server
 const BASE_URL = process.env.BASE_URL;
 const PORT = process.env.PORT || 5050;

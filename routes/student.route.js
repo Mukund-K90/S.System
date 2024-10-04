@@ -5,10 +5,10 @@ const { authorization, authentication } = require('../middleware/auth.middleware
 const router = express.Router();
 
 //user registration 
-router.post('/registration', authentication, studentValidate, studentController.studentRegister);
-router.put('/update/:id', authentication, studentController.studentUpdate);
-router.post('/view/:id', authentication, studentController.studentView);
-router.get('/list', authentication, studentController.studentFetch);
-router.delete('/delete/:id', authentication, studentController.studentDelete);
+router.post('/registration', authentication, studentValidate, studentController.insertStudent);
+router.put('/update', authentication, studentController.updateStudent);
+router.post('/view/:id', authentication, studentController.viewStudent);
+router.get('/list', authentication, studentController.fetchStudents);
+router.delete('/delete/:id', authentication, studentController.deleteStudent);
 
 module.exports = router;

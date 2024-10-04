@@ -3,10 +3,10 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 //Insert Student
-async function studentRegister(req, res) {
+async function insertStudent(req, res) {
     const student = await Student.findOne({ email: req.body.email });
     if (student && student.isDelete === false) {
-        return res.status(400).send("student already exists. Please sign in.");
+        return res.status(400).send("student already exists.");
     } else {
         try {
             const {
@@ -46,7 +46,7 @@ async function studentRegister(req, res) {
                 return res.status(200).send({
                     code: 200,
                     success: true,
-                    message: "Student Registration Successfully",
+                    message: "Student Inserted Successfully",
                     data: student._id
                 });
             }
@@ -72,7 +72,7 @@ async function studentRegister(req, res) {
                 return res.status(200).send({
                     code: 200,
                     success: true,
-                    message: "Student Registration Successfully",
+                    message: "Student Inserted Successfully",
                     data:  student._id
                 });
             }
@@ -86,11 +86,11 @@ async function studentRegister(req, res) {
 }
 
 //Update
-async function studentUpdate(req, res) {
+async function updateStudent(req, res) {
     // const token = req.params.token;
     // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
     // const user = await Student.findById(decodeToken.userId);
-    const id = req.params.id;
+    const id = req.body.id;
     const updateData = req.body;
     const student = await Student.findById(id);
     if (!student || student.isDelete === true) {
@@ -125,7 +125,7 @@ async function studentUpdate(req, res) {
 
 
 //View
-async function studentView(req, res) {
+async function viewStudent(req, res) {
     // const token = req.params.token;
     // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
     // const user = await Student.findById(decodeToken.userId);
@@ -149,7 +149,7 @@ async function studentView(req, res) {
                     email: student.email,
                     mobile: `${student.countryCode}${student.phone}`,
                     address: student.address,
-                    student: student.guardianDetails
+                    guardianDetails: student.guardianDetails
                 }
             })
         } catch (error) {
@@ -164,7 +164,7 @@ async function studentView(req, res) {
 }
 
 //Fecth Student
-async function studentFetch(req, res) {
+async function fetchStudents(req, res) {
     // const token = req.params.token;
     // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
     // const user = await Student.findById(decodeToken.userId);
@@ -235,7 +235,7 @@ async function studentFetch(req, res) {
 }
 
 //Delete
-async function studentDelete(req, res) {
+async function deleteStudent(req, res) {
     const id = req.params.id;
     const student = await Student.findByIdAndUpdate(
         id,
@@ -265,9 +265,9 @@ async function studentDelete(req, res) {
 }
 
 module.exports = {
-    studentRegister,
-    studentUpdate,
-    studentView,
-    studentFetch,
-    studentDelete
+    insertStudent,
+    updateStudent,
+    viewStudent,
+    fetchStudents,
+    deleteStudent
 }

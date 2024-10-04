@@ -27,18 +27,22 @@ const campusSchema = new mongoose.Schema({
         type: String,
     },
     principalDetails: {
-        name: {
+        principalName: {
             type: String
         },
         number: {
             type: String
         },
-        email: {
+        principalEmail: {
             type: String
         }
     },
     affiliation: {
         type: String,
+    },
+    isDelete: {
+        type: Boolean,
+        default: false
     },
     createdAt: {
         type: Date,
@@ -52,6 +56,11 @@ const campusSchema = new mongoose.Schema({
 
 campusSchema.pre('save', function (next) {
     this.updatedAt = Date.now();
+    next();
+});
+
+campusSchema.pre(['updateOne', 'findOneAndUpdate'], function (next) {
+    this.set({ updatedAt: Date.now() });
     next();
 });
 

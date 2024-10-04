@@ -5,7 +5,7 @@ async function studentValidate(req, res, next) {
         firstName: joi.string().required().min(2).max(50),
         lastName: joi.string().required().min(2).max(50),
         dob: joi.string().required(),
-        gender: joi.string().valid('male', 'female','others').required(),
+        gender: joi.string().valid('male', 'female', 'others').required(),
         email: joi.string().required().email({
             minDomainSegments: 2,
             tlds: {
@@ -46,8 +46,8 @@ async function teacherValidate(req, res, next) {
         }).lowercase(),
         countryCode: joi.string().required(),
         phone: joi.string().regex(/^[0-9]{10}$/).messages({ 'string.pattern.base': `Phone number must have 10 digits.` }).required(),
-        qualification:joi.string().required(),
-        specialization:joi.string().required(),
+        qualification: joi.string().required(),
+        specialization: joi.string().required(),
         dob: joi.string().required(),
         dateOfJoining: joi.string().required(),
     });
@@ -63,7 +63,43 @@ async function teacherValidate(req, res, next) {
     next();
 }
 
+async function campusValidate(req, res, next) {
+    const campusSchema = joi.object({
+        name: joi.string().required().min(2).max(50),
+        email: joi.string().required().email({
+            minDomainSegments: 2,
+            tlds: ['com', 'in']
+        }).lowercase(),
+        countryCode: joi.string().required(),
+        phone: joi.string().regex(/^[0-9]{10}$/).messages({ 'string.pattern.base': `Phone number must have 10 digits.` }).required(),
+        address: joi.string().required().max(50),
+        city: joi.string().required().max(50),
+        state: joi.string().required().max(50),
+        zipCode: joi.string().required(),
+        principalDetails: joi.object({
+            principalName: joi.string().required(),
+            number: joi.string().regex(/^[0-9]{10}$/).messages({ 'string.pattern.base': `Phone number must have 10 digits.` }).required(),
+            principalEmail: joi.string().required().email({
+                minDomainSegments: 2,
+                tlds: ['com', 'in']
+            }).lowercase(),
+        }),
+        affiliation: joi.string().required(),
+    });
+
+    const { error } = campusSchema.validate(req.body);
+    if (error) {
+        return res.status(400).send({
+            success: false,
+            error: error.details[0].message,
+        });
+    }
+    next();
+}
+
+
 module.exports = {
     studentValidate,
     teacherValidate,
+    campusValidate,
 }

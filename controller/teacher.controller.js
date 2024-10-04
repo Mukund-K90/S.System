@@ -3,10 +3,10 @@ const jwt = require('jsonwebtoken');
 const Teacher = require('../model/Teacher.model');
 
 //Insert Student
-async function teacherRegister(req, res) {
+async function insertTeacher(req, res) {
     const teacher = await Teacher.findOne({ email: req.body.email });
     if (teacher && teacher.isDelete === false) {
-        return res.status(400).send("teacher already exists. Please sign in.");
+        return res.status(400).send("teacher already exists.");
     } else {
         try {
             const {
@@ -41,7 +41,7 @@ async function teacherRegister(req, res) {
                 return res.status(200).send({
                     code: 200,
                     success: true,
-                    message: "Teacher Registration Successfully",
+                    message: "Teacher Inserted Successfully",
                     data: teacher._id
                 });
             }
@@ -63,7 +63,7 @@ async function teacherRegister(req, res) {
                 return res.status(200).send({
                     code: 200,
                     success: true,
-                    message: "Teacher Registration Successfully",
+                    message: "Teacher Inserted Successfully",
                     data: teacher
                 });
             }
@@ -77,7 +77,7 @@ async function teacherRegister(req, res) {
 }
 
 //Update
-async function teacherUpdate(req, res) {
+async function updateTeacher(req, res) {
     // const token = req.params.token;
     // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
     // const user = await Teacher.findById(decodeToken.userId);
@@ -114,7 +114,7 @@ async function teacherUpdate(req, res) {
 }
 
 // //View
-async function teacherView(req, res) {
+async function viewTeacher(req, res) {
     // const token = req.params.token;
     // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
     // const user = await Student.findById(decodeToken.userId);
@@ -153,7 +153,7 @@ async function teacherView(req, res) {
 }
 
 // //List Teacher
-async function teachersFetch(req, res) {
+async function fetchTeachers(req, res) {
 
     try {
         const teachers = await Teacher.find().sort({ createdAt: -1 }).where({ isDelete: false });
@@ -187,7 +187,7 @@ async function teachersFetch(req, res) {
 }
 
 // //Delete
-async function teacherDelete(req, res) {
+async function deleteTeacher(req, res) {
     // const token = req.params.token;
     // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
     // const user = await Student.findById(decodeToken.userId);
@@ -221,9 +221,9 @@ async function teacherDelete(req, res) {
 }
 
 module.exports = {
-    teacherRegister,
-    teacherUpdate,
-    teacherView,
-    teachersFetch,
-    teacherDelete
+    insertTeacher,
+    updateTeacher,
+    viewTeacher,
+    fetchTeachers,
+    deleteTeacher
 }

@@ -6,7 +6,7 @@ const { authorization, authentication } = require('../middleware/auth.middleware
 
 //user registration 
 router.post('/login', adminController.adminLogin);
-router.post('/logout', authentication, adminController.adminLogOut);
+// router.post('/logout', authentication, adminController.adminLogOut);
 
 router.get('/protected', authorization, (req, res) => {
     res.json({ message: "Authorization Complete" });
