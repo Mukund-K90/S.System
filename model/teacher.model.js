@@ -62,6 +62,6 @@ teacherSchema.pre(['updateOne', 'findOneAndUpdate'], function (next) {
     next();
 });
 
-const Teacher = mongoose.model('teacher', teacherSchema);
+const Teacher = mongoose.model('Teachers', teacherSchema);
 
 module.exports = Teacher;

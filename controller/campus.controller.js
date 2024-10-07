@@ -21,7 +21,7 @@ async function insertCampus(req, res) {
     if (campus && campus.isDelete === false) {
         return res.status(400).send("campus already exists.");
     }
-    else if (campus && campus.isDelete === true) {
+    if (campus && campus.isDelete === true) {
         try {
             const campus = await Campus.findOneAndUpdate(
                 { email: email }, {
@@ -38,7 +38,8 @@ async function insertCampus(req, res) {
                     number,
                     principalEmail
                 },
-                affiliation
+                affiliation,
+                isDelete: false
             });
 
             await campus.save();
@@ -72,7 +73,7 @@ async function insertCampus(req, res) {
                     number,
                     principalEmail
                 },
-                affiliation
+                affiliation,
             });
             await campus.save();
             return res.status(200).send({

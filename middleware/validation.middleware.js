@@ -97,6 +97,12 @@ async function campusValidate(req, res, next) {
     next();
 }
 
+// async function attendanceValidate(req,res,next) {
+//     const attendanceSchema=joi.object({
+//         userId:joi.string().required(),
+//         teacherId:joi.string().required(),
+//     });
+// }
 
 module.exports = {
     studentValidate,

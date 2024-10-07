@@ -17,7 +17,7 @@ const accessLogStream = fs.createWriteStream(path.join(__dirname, 'LOGS', 'acces
     flags: 'a'
 });
 
-app.use(morgan(':remote-addr | :remote-user | :status :method :url | :date | :response-time ms ', { stream: accessLogStream }));
+// app.use(morgan(':remote-addr | :remote-user | :status :method :url | :date | :response-time ms ', { stream: accessLogStream }));
 
 
 app.use(cors());
@@ -47,6 +47,10 @@ app.use('/v1/teacher', teacherRoute);
 //Campus Route
 const campusRoute = require('./routes/campus.route');
 app.use('/v1/campus', campusRoute);
+
+//Attendance Route
+const attendanceRoute = require('./routes/attendance.route');
+app.use('/v1/attendance', attendanceRoute);
 
 //Server
 const BASE_URL = process.env.BASE_URL;

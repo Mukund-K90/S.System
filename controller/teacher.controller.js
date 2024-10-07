@@ -4,77 +4,81 @@ const Teacher = require('../model/Teacher.model');
 
 //Insert Student
 async function insertTeacher(req, res) {
-    const teacher = await Teacher.findOne({ email: req.body.email });
-    if (teacher && teacher.isDelete === false) {
-        return res.status(400).send("teacher already exists.");
-    } else {
-        try {
-            const {
+    try {
+        const teacher = await Teacher.findOne({ email: req.body.email });
+        if (teacher && teacher.isDelete === false) {
+            return res.status(400).send("Teacher already exists.");
+        }
+        const {
+            firstName,
+            lastName,
+            email,
+            countryCode,
+            phone,
+            campusId,
+            qualification,
+            specialization,
+            dob,
+            dateOfJoining,
+        } = req.body;
+
+        if (teacher && teacher.isDelete === true) {
+            const updatedTeacher = await Teacher.findOneAndUpdate(
+                { email: email },
+                {
+                    firstName,
+                    lastName,
+                    email,
+                    countryCode: `+${countryCode}`,
+                    phone,
+                    campusId,
+                    qualification,
+                    specialization,
+                    dob,
+                    dateOfJoining,
+                    isDelete: false, 
+                    updatedAt: Date.now(), 
+                },
+                { new: true } 
+            );
+
+            return res.status(200).send({
+                code: 200,
+                success: true,
+                message: "Teacher added successfully.",
+                data: updatedTeacher._id,
+            });
+        } else {
+            const newTeacher = new Teacher({
                 firstName,
                 lastName,
                 email,
-                countryCode,
+                countryCode: `+${countryCode}`,
                 phone,
                 campusId,
                 qualification,
                 specialization,
                 dob,
                 dateOfJoining,
-            } = req.body;
+            });
 
-            if (teacher.isDelete === true) {
-                const teacher = await Teacher.findOneAndUpdate(
-                    { email: email }, {
-                    firstName,
-                    lastName,
-                    email,
-                    countryCode: `+${countryCode}`,
-                    phone,
-                    campusId,
-                    qualification,
-                    specialization,
-                    dob,
-                    dateOfJoining,
-                });
-
-                await teacher.save();
-                return res.status(200).send({
-                    code: 200,
-                    success: true,
-                    message: "Teacher Inserted Successfully",
-                    data: teacher._id
-                });
-            }
-            else {
-                const teacher = new Teacher({
-                    firstName,
-                    lastName,
-                    email,
-                    countryCode: `+${countryCode}`,
-                    phone,
-                    campusId,
-                    qualification,
-                    specialization,
-                    dob,
-                    dateOfJoining,
-                });
-
-                await teacher.save();
-                return res.status(200).send({
-                    code: 200,
-                    success: true,
-                    message: "Teacher Inserted Successfully",
-                    data: teacher
-                });
-            }
-        } catch (error) {
-            res.status(500).send({
-                success: false,
-                message: error.message,
+            await newTeacher.save();
+            return res.status(201).send({
+                code: 201,
+                success: true,
+                message: "Teacher added successfully.",
+                data: newTeacher._id,
             });
         }
+    } catch (error) {
+        console.error(error); 
+        return res.status(500).send({
+            success: false,
+            message: error.message,
+        });
     }
 }
+
 
 //Update
 async function updateTeacher(req, res) {

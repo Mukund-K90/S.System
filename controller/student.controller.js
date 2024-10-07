@@ -2,86 +2,87 @@ const Student = require("../model/student.model");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-//Insert Student
 async function insertStudent(req, res) {
-    const student = await Student.findOne({ email: req.body.email });
-    if (student && student.isDelete === false) {
-        return res.status(400).send("student already exists.");
-    } else {
-        try {
-            const {
+    try {
+        const student = await Student.findOne({ email: req.body.email });
+        if (student && student.isDelete === false) {
+            return res.status(400).send("Student already exists.");
+        }
+        const {
+            firstName,
+            lastName,
+            dob,
+            gender,
+            email,
+            countryCode,
+            phone,
+            guardianDetails,
+            address,
+        } = req.body;
+        const { fatherName, fatherOccupation, motherName, motherOccupation } = guardianDetails;
+        if (student && student.isDelete === true) {
+            const updatedStudent = await Student.findOneAndUpdate(
+                { email: email },
+                {
+                    firstName,
+                    lastName,
+                    dob,
+                    gender,
+                    email,
+                    countryCode: `+${countryCode}`,
+                    phone,
+                    guardianDetails: {
+                        fatherName,
+                        fatherOccupation,
+                        motherName,
+                        motherOccupation,
+                    },
+                    address,
+                    isDelete: false,
+                    updatedAt: Date.now(),
+                },
+                { new: true }
+            );
+
+            return res.status(200).send({
+                code: 200,
+                success: true,
+                message: "Student added successfully.",
+                id: updatedStudent._id,
+            });
+        } else {
+        
+            const newStudent = new Student({
                 firstName,
                 lastName,
                 dob,
                 gender,
                 email,
-                countryCode,
+                countryCode: `+${countryCode}`,
                 phone,
-                guardianDetails,
+                guardianDetails: {
+                    fatherName,
+                    fatherOccupation,
+                    motherName,
+                    motherOccupation,
+                },
                 address,
-            } = req.body;
+            });
 
-            const { fatherName, fatherOccupation, motherName, motherOccupation } = guardianDetails;
-            if (student.isDelete === true) {
-                const student = await Student.findOneAndUpdate(
-                    { email: email },
-                    {
-                        firstName,
-                        lastName,
-                        dob,
-                        gender,
-                        email,
-                        countryCode: `+${countryCode}`,
-                        phone,
-                        guardianDetails: {
-                            fatherName,
-                            fatherOccupation,
-                            motherName,
-                            motherOccupation,
-                        },
-                        address,
-                        isDelete: false
-                    });
-                await student.save();
-                return res.status(200).send({
-                    code: 200,
-                    success: true,
-                    message: "Student Inserted Successfully",
-                    data: student._id
-                });
-            }
-            else {
-                const student = new Student(
-                    {
-                        firstName,
-                        lastName,
-                        dob,
-                        gender,
-                        email,
-                        countryCode: `+${countryCode}`,
-                        phone,
-                        guardianDetails: {
-                            fatherName,
-                            fatherOccupation,
-                            motherName,
-                            motherOccupation,
-                        },
-                        address,
-                    });
-                await student.save();
-                return res.status(200).send({
-                    code: 200,
-                    success: true,
-                    message: "Student Inserted Successfully",
-                    data:  student._id
-                });
-            }
-        } catch (error) {
-            res.status(500).send({
-                success: false,
-                message: error.message,
+            await newStudent.save();
+            return res.status(201).send({
+                code: 201,
+                success: true,
+                message: "Student added successfully.",
+                id: newStudent._id,
             });
         }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({
+            success: false,
+            message: error.message,
+        });
     }
 }
 
@@ -122,7 +123,6 @@ async function updateStudent(req, res) {
     }
 
 }
-
 
 //View
 async function viewStudent(req, res) {
