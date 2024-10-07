@@ -30,6 +30,7 @@ async function adminLogin(req, res) {
                 }
                 else {
                     const updateToken = await Token.findOneAndUpdate({ userId: admin._id }, { token: token }, { new: true });
+                    updateToken.save();
                 }
                 res.status(200).send({
                     code: 200,

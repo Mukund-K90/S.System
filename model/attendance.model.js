@@ -4,18 +4,14 @@ const { format } = require('date-fns');
 const attendanceSchema = new mongoose.Schema({
     studentId: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true,
         ref: 'Students'
     },
     teacherId: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true,
         ref: 'Teachers'
     },
     status: {
         type: String,
-        enum: ['present', 'absent', 'late'],
-        required: true
     },
     remarks: {
         type: String,

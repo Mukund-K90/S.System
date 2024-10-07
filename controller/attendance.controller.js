@@ -1,4 +1,4 @@
-const Attendance = require("../model/attendance.model");
+const Attendance = require("../model/attendance.model.js");
 const Student = require("../model/student.model");
 const Teacher = require("../model/Teacher.model");
 const { format, parse, isBefore } = require('date-fns');
@@ -73,7 +73,7 @@ async function updateAttendance(req, res) {
         const attendanceRecord = await Attendance.findOneAndUpdate(
             { studentId: studentId, date: formattedDate },
             updateData,
-            { new: true }
+            { new: true, select: 'updatedAt' }
         );
         if (!attendanceRecord) {
             return res.status(404).send("Attendance record not found for the provided date.");
@@ -173,16 +173,19 @@ async function deleteAttendance(req, res) {
             return res.status(404).send("Student not found.");
         }
         const regex = new RegExp(date);
-        const attendanceRecord = await Attendance.findOneAndDelete(
-            { studentId: studentId, date: { $regex: regex } },
+        const attendanceRecord = await Attendance.findOneAndUpdate(
+            {studentId: studentId, date: { $regex: regex },},
+            { isDelete: true },
+            { new: true, select: 'updatedAt' }
+
         );
-        if (!attendanceRecord) {
+        if (!attendanceRecord || attendanceRecord.isDelete === true) {
             return res.status(404).send("Attendance record not found for the provided date.");
         }
         else {
             return res.status(201).send({
                 success: true,
-                message: 'Attendance record',
+                message: 'Attendance record deleted',
                 data: attendanceRecord
             });
         }
