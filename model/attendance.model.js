@@ -35,6 +35,7 @@ const attendanceSchema = new mongoose.Schema({
 });
 
 attendanceSchema.pre('save', function (next) {
+    this.createdAt = Date.now();
     this.updatedAt = Date.now();
     next();
 });
@@ -42,7 +43,7 @@ attendanceSchema.pre('save', function (next) {
 
 attendanceSchema.pre(['updateOne', 'findOneAndUpdate'], function (next) {
     this.set({ updatedAt: Date.now() });
-    next();
+    next(); s
 });
 
 

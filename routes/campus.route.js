@@ -6,10 +6,14 @@ const campusValidator = require('../validator/campus.validator');
 
 //insert
 router.post('/registration', campusValidator, authentication, campusController.insertCampus);
-router.put('/update/:id', authentication, campusController.updateCampus);
-router.post('/view/:id', authentication, campusController.viewCampus);
+//update
+router.put('/update', authentication, campusController.updateCampus);
+//view
+router.post('/view', authentication, campusController.viewCampus);
+//list
 router.get('/list', authentication, campusController.fetchCampus);
-router.delete('/delete/:id', authentication, campusController.deleteCampus);
+//delete
+router.delete('/delete', authentication, campusController.deleteCampus);
 
 
 

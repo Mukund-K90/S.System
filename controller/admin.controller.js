@@ -1,25 +1,42 @@
-const Admin = require("../model/admin.model")
 const bcrypt = require('bcrypt');
-const { cookie } = require("express/lib/response");
 const jwt = require('jsonwebtoken');
 const Token = require("../model/token.model");
-const blacklist = new Set();
+const adminDao = require('../dao/adminauthDao');
+const { errorResponse, successResponse } = require('../utils/apiResponse');
 
+//check user
+async function checkUser(req, res) {
+    try {
+        const { email } = req.body;
+        const admin = await adminDao.findAdminByEmail(email);
+        if (!admin) {
+            return errorResponse(req, res, 401, "Invalid user. Please check & try again");
+        }
+        const data = {
+            id: admin._id,
+            email: admin.email,
+        }
+        return successResponse(req, res, 200, "valid user", data);
+    } catch (error) {
+        errorResponse(req, res, error.message)
+    }
+}
 
+//login
 async function adminLogin(req, res) {
     try {
         const { email, password } = req.body;
-        const admin = await Admin.findOne({ email: email });
+        const admin = await adminDao.findAdminByEmail(email);
         if (!admin) {
-            return res.status(400).send({ message: "Invalid Admin. Please check & try again" });
+            return errorResponse(req, res, 401, "Invalid Admin. Please check & try again");
         }
         else {
             const isPasswordValid = await bcrypt.compare(password, admin.password);
             if (!isPasswordValid) {
-                return res.status(401).json({ message: "Password Authentication failed" });
+                return successResponse(req, res, 400, "Password Authentication failed")
             }
             else {
-                const token = jwt.sign({ userId: admin._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+                const token = jwt.sign({ userId: admin._id }, process.env.JWT_SECRET, { expiresIn: "2 days" });
                 const checkToken = await Token.findOne({ userId: admin._id });
                 if (!checkToken) {
                     const savedToken = new Token({
@@ -29,44 +46,36 @@ async function adminLogin(req, res) {
                     savedToken.save();
                 }
                 else {
-                    const updateToken = await Token.findOneAndUpdate({ userId: admin._id }, { token: token }, { new: true });
+                    const updateToken = await Token.findOneAndUpdate({ userId: admin._id }, { token }, { new: true });
                     updateToken.save();
                 }
-                res.status(200).send({
-                    code: 200,
-                    success: true,
-                    message: "Login successfully",
-                    token: token
-                });
+                return successResponse(req, res, 200, "Successfully logedin", token);
             }
         }
     } catch (error) {
-        res.status(500).send({
-            success: false,
-            message: error.message,
-        });
+        errorResponse(req, res, error.message)
     }
 }
 
-//logout by add token in blacklist
+//logout 
 async function adminLogOut(req, res) {
     try {
         const token = req.headers.authorization?.split(" ")[1];
         if (!token) {
-            return res.status(400).json({ message: "Invalid token, Logout Failed" });
+            return errorResponse(req, res, 400, "Invalid token, Logout Failed");
         }
         const checkToken = await Token.findOneAndDelete({ token: token });
         if (!checkToken) {
-            return res.status(401).send({ message: "logout failed! user not logged in anymore" });
+            return errorResponse(req, res, 400, "logout failed! user not logged in anymore");
         }
-        res.status(200).send({ message: "Logout Successully!" });
+        return successResponse(req, res, "Logout Successully!");
     } catch (error) {
-        res.status(500).send({ success: false, message: error.message });
+        return errorResponse(req, res, error.message);
     }
 }
 
-
 module.exports = {
     adminLogin,
-    adminLogOut
+    adminLogOut,
+    checkUser
 }

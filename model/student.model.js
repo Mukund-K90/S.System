@@ -23,6 +23,7 @@ const studentSchema = new mongoose.Schema({
     },
     phone: {
         type: String,
+        unique: true
     },
     campusId: {
         type: String,

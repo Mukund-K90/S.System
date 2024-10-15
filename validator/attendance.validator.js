@@ -1,11 +1,11 @@
 const joi = require("joi");
 
-
 async function attendanceValidator(req, res, next) {
     const attendanceSchema = joi.object({
-        userId: joi.string().required(),
+        studentId: joi.string().required(),
         teacherId: joi.string().required(),
-        status: joi.string().valid('present', 'abesent', 'late').required(),
+        status: joi.string().valid('present', 'absent', 'late').required(),
+        remarks:joi.string().required()
     });
 
     const { error } = attendanceSchema.validate(req.body);

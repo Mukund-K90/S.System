@@ -1,168 +1,108 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Campus = require('../model/campus.model');
+const campusDao = require('../dao/campusDao');
+const { successResponse, errorResponse } = require('../utils/apiResponse');
 
 //Insert Campus
 async function insertCampus(req, res) {
-    const {
-        name,
-        email,
-        countryCode,
-        phone,
-        address,
-        city,
-        state,
-        zipCode,
-        principalDetails,
-        affiliation,
-    } = req.body;
-    const { principalName, number, principalEmail } = principalDetails;
-    const campus = await Campus.findOne({ email: email });
-    if (campus && campus.isDelete === false) {
-        return res.status(400).send("campus already exists.");
-    }
-    if (campus && campus.isDelete === true) {
-        try {
-            const campus = await Campus.findOneAndUpdate(
-                { email: email }, {
-                name,
-                email,
-                countryCode: `+${countryCode}`,
-                phone,
-                address,
-                city,
-                state,
-                zipCode,
-                principalDetails: {
-                    principalName,
-                    number,
-                    principalEmail
-                },
-                affiliation,
-                isDelete: false
-            });
-
-            await campus.save();
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "campus Inserted Successfully",
-                id: campus._id
-            });
-
-        } catch (error) {
-            res.status(500).send({
-                success: false,
-                message: error.message,
-            });
+    try {
+        const {
+            name,
+            email,
+            countryCode,
+            phone,
+            address,
+            city,
+            state,
+            zipCode,
+            principalDetails,
+            affiliation,
+        } = req.body;
+        const { principalName, number, principalEmail } = principalDetails;
+        const campus = await campusDao.findByEmail(email);
+        if (campus && !campus.isDelete) {
+            return res.status(400).send("campus already exists.");
         }
-    }
-    else {
-        try {
-            const campus = new Campus({
-                name,
-                email,
-                countryCode: `+${countryCode}`,
-                phone,
-                address,
-                city,
-                state,
-                zipCode,
-                principalDetails: {
-                    principalName,
-                    number,
-                    principalEmail
-                },
-                affiliation,
-            });
-            await campus.save();
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "campus Inserted Successfully",
-                data: campus._id
-            });
-        } catch (error) {
-            res.status(500).send({
-                success: false,
-                message: error.message,
-            });
+        if (campus && campus.isDelete) {
+            await campusDao.hardDelete(email);
         }
+        const campusData =
+        {
+            name,
+            email,
+            countryCode: `+${countryCode}`,
+            phone,
+            address,
+            city,
+            state,
+            zipCode,
+            principalDetails: {
+                principalName,
+                number,
+                principalEmail
+            },
+            affiliation,
+        };
+        const newCampus = await campusDao.insert(campusData);
+        if (!newCampus) {
+            return errorResponse(req, res, 500, "campus not inserted");
+        }
+        return successResponse(req, res, 200, "Campus inserted successully",);
+    } catch (error) {
+        return errorResponse(req, res, 500, error.message);
     }
 }
 
 //update campus
 async function updateCampus(req, res) {
-    const id = req.params.id;
-    const updateData = req.body;
-    const campus = await Campus.findById(id);
+    try {
+        const { id, ...updatedData } = req.body;
+        const campus = await campusDao.findById(id);
 
-    if (!campus || campus.isDelete === true) {
-        return res.status(401).send({ message: "campus not found." });
-    }
-    else {
-        try {
-            const updatedCampus = await Campus.findByIdAndUpdate(
-                id,
-                updateData,
-                { new: true, select: 'updatedAt' }
-            );
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "campus Updated Successfully",
-                data: {
-                    _id: updatedCampus._id,
-                    updatedAt: updatedCampus.updatedAt,
-                }
-            });
-        } catch (error) {
-            res.status(500).send({
-                success: false,
-                message: error.message,
-            });
+        if (!campus || campus.isDelete === true) {
+            return res.status(401).send({ message: "campus not found." });
         }
+        const updatedCampus = await campusDao.update(id, updatedData);
+        if (!updatedCampus) {
+            return errorResponse(req, res, 500, "campus not updated");
+        }
+        return successResponse(req, res, 200, "campus updated successfully");
+
+    } catch (error) {
+        return errorResponse(req, res, 500, error.message);
     }
 }
 
 //view campus
 async function viewCampus(req, res) {
-    const id = req.params.id;
-    const campus = await Campus.findById(id);
-    if (!campus || campus.isDelete === true) {
-        return res.status(401).send({ message: "campus not found." });
-    }
-    else {
-        try {
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "campus View Successfully",
-                data: {
-                    _id: campus._id,
-                    name: campus.name,
-                    email: campus.email,
-                    mobile: `${campus.countryCode}${campus.phone}`,
-                    address: campus.address,
-                    city: campus.city,
-                    state: campus.state,
-                    zipcode: campus.zipCode,
-                    principalDetails: campus.principalDetails,
-                    affiliation: campus.affiliation,
-                }
-            });
-        } catch (error) {
-            res.status(500).send({
-                success: false,
-                message: error.message,
-            });
+    try {
+        const id = req.body.id;
+        const campus = await campusDao.findById(id);
+        if (!campus || campus.isDelete === true) {
+            return res.status(401).send({ message: "campus not found." });
         }
+        const data = {
+            _id: campus._id,
+            name: campus.name,
+            email: campus.email,
+            mobile: `${campus.countryCode}${campus.phone}`,
+            address: campus.address,
+            city: campus.city,
+            state: campus.state,
+            zipcode: campus.zipCode,
+            principalDetails: campus.principalDetails,
+            affiliation: campus.affiliation,
+        }
+        return successResponse(req, res, 200, "Campus view successully", data);
+    } catch (error) {
+        errorResponse(req, res, 500, error.message);
     }
 }
 
 //list campus
 async function fetchCampus(req, res) {
-    const campus = await Campus.find().sort({ createdAt: -1 }).where({ isDelete: false });
+    const campus = await campusDao.fetch();
     if (!campus) {
         return res.status(401).send({ message: "campus not found." });
     }
@@ -178,47 +118,24 @@ async function fetchCampus(req, res) {
         affiliation: c.affiliation,
     }));
     try {
-        return res.status(200).send({
-            code: 200,
-            success: true,
-            message: "campus List",
-            data: formattedCampus
-        });
+        return successResponse(req, res, 200, "all campus view succefully", formattedCampus);
     } catch (error) {
-        res.status(500).send({
-            success: false,
-            message: error.message,
-        });
+        return errorResponse(req, res, 500, error.message);
     }
 }
 
 //Delete Campus
 async function deleteCampus(req, res) {
-    const id = req.params.id;
-    const campus = await Campus.findByIdAndUpdate(
-        id,
-        { isDelete: true },
-        { new: true, select: 'updatedAt' }
-    ); if (!campus || campus.isDelete === true) {
-        return res.status(400).send(`campus Not found. Please check and try again`);
-    }
-    else {
-        try {
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "Campus Deleted Successfully",
-                data: {
-                    id: id
-                }
-            })
-        } catch (error) {
-            res.status(500).send({
-                success: false,
-                message: error.message,
-            });
+    try {
+        const id = req.body.id;
+        const campus = await campusDao.findById(id);
+        if (!campus || campus.isDelete === true) {
+            return res.status(400).send(`campus Not found. Please check and try again`);
         }
-
+        const deletedCampus = await campusDao.delete(id);
+        return successResponse(req, res, 200, "Campus Deleted Successfully", deletedCampus);
+    } catch (error) {
+        errorResponse(req, res, 500, error.message);
     }
 }
 module.exports = {

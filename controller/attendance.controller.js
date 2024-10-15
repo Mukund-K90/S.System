@@ -2,50 +2,50 @@ const Attendance = require("../model/attendance.model.js");
 const Student = require("../model/student.model");
 const Teacher = require("../model/Teacher.model");
 const { format, parse, isBefore } = require('date-fns');
-const moment = require('moment')
-
-const date = format(new Date(), 'dd-MMM-yyyy hh:mm a')
+const studentDao = require('../dao/studentDao.js');
+const teacherDao = require('../dao/teacherDao.js');
+const attendanceDao = require('../dao/attendanceDao.js');
+const { successResponse, errorResponse } = require("../utils/apiResponse.js");
 
 
 //insert
 async function insertAttendance(req, res) {
-    const { studentId,
-        teacherId,
-        status,
-        remarks
-    } = req.body;
     try {
-        const student = await Student.findById(studentId);
-        const teacher = await Teacher.findById(teacherId);
-        if (!student || student.isDelete === true) {
+        const { studentId,
+            teacherId,
+            status,
+            remarks
+        } = req.body;
+        const student = await studentDao.findById(studentId);
+        const teacher = await teacherDao.findById(teacherId);
+        if (!student || student.isDelete) {
             return res.status(400).send(`student Not found. Please check and try again`);
         }
-        if (!teacher || teacher.isDelete === true) {
+        if (!teacher || teacher.isDelete) {
             return res.status(400).send(`teacher Not found. Please check and try again`);
         }
-        const attendance = new Attendance({
+        const date = format(new Date(), 'dd-MMM-yyyy hh:mm a')
+        const attendance = {
             studentId,
             teacherId,
             status,
             remarks,
             date: date
-        });
-        await attendance.save();
-        return res.status(201).send({
-            success: true,
-            message: 'Attendance record insrted successfully.',
-            data: {
-                id: attendance._id,
-                studentId: studentId,
-                teacherId: teacherId
-            },
-        });
+        };
+        const attendanceInsert = await attendanceDao.insert(attendance);
+
+        if (!attendanceInsert) {
+            return errorResponse(req, res, 500, "attendance not inserted");
+        }
+        const data = {
+            id: attendanceInsert._id,
+            studentId: studentId,
+            teacherId: teacherId
+        };
+
+        return successResponse(req, res, 200, "Attendance record insrted successfully.", data);
     } catch (error) {
-        return res.status(500).send({
-            success: false,
-            message: 'Insert Attendance record failed.',
-            error: error.message,
-        });
+        return errorResponse(req, res, 500, error.message);
     }
 }
 
@@ -53,7 +53,7 @@ async function insertAttendance(req, res) {
 async function updateAttendance(req, res) {
     const { studentId, date, status, remarks } = req.body;
 
-    const studentExists = await Student.findById(studentId);
+    const studentExists = await studentDao.findById(studentId);
     if (!studentExists) {
         return res.status(404).send("Student not found.");
     }
@@ -70,38 +70,27 @@ async function updateAttendance(req, res) {
             updatedAt: Date.now()
         };
         const formattedDate = format(providedDate, 'dd-MMM-yyyy hh:mm a');
-        const attendanceRecord = await Attendance.findOneAndUpdate(
-            { studentId: studentId, date: formattedDate },
-            updateData,
-            { new: true, select: 'updatedAt' }
-        );
+        const attendanceRecord = await attendanceDao.update(studentId, formattedDate, updateData);
         if (!attendanceRecord) {
             return res.status(404).send("Attendance record not found for the provided date.");
         }
-        return res.status(200).send({
-            code: 200,
-            success: true,
-            message: "Attendance updated successfully.",
-            data: attendanceRecord
-        });
+        return successResponse(req, res, 200, "Attendance updated successfully.", attendanceRecord);
     } catch (error) {
-        return res.status(500).send({
-            success: false,
-            message: error.message,
-        });
+        return errorResponse(req, res, 500, error.message);
     }
 }
 
 //view
 async function viewAttendance(req, res) {
-    const studentId = req.body.studentId;
     try {
-        const student = await Student.findById(studentId);
+        const studentId = req.body.studentId;
+
+        const student = await studentDao.findById(studentId);
 
         if (!student) {
             return res.status(401).send({ message: "student not found ! check and try again" });
         }
-        const allAttendance = await Attendance.find({ studentId: studentId });
+        const allAttendance = await attendanceDao.allAttendance(studentId);
         if (!allAttendance) {
             return res.status(401).send({ message: "no attendance found for this student" });
         }
@@ -113,17 +102,10 @@ async function viewAttendance(req, res) {
                 remarks: attendance.remarks,
                 date: attendance.date
             }));
-            return res.status(201).send({
-                success: true,
-                message: 'Attendance record',
-                data: formattedattendance
-            });
+            return successResponse(req, res, 200, "all attendance record view successfully", formattedattendance);
         }
     } catch (error) {
-        return res.status(500).send({
-            success: false,
-            error: error.message,
-        });
+        return errorResponse(req, res, 500, error.message);
     }
 
 }
@@ -137,7 +119,6 @@ async function listAttendance(req, res) {
             date: { $regex: regex },
             isDelete: false
         }).sort({ createdAt: 1 });
-
         if (!allAttendance || allAttendance.length === 0) {
             return res.status(401).send({ message: "no attendance found! check and try again" });
         }
@@ -150,17 +131,10 @@ async function listAttendance(req, res) {
                 remarks: attendance.remarks,
                 date: attendance.date
             }));
-            return res.status(201).send({
-                success: true,
-                message: `Attendance record for ${date}`,
-                data: formattedattendance
-            });
+            return successResponse(req, res, 200, `Attendance record for ${date}`, formattedattendance);
         }
     } catch (error) {
-        return res.status(500).send({
-            success: false,
-            error: error.message,
-        });
+        return errorResponse(req, res, 500, error.message);
     }
 }
 
@@ -168,17 +142,12 @@ async function listAttendance(req, res) {
 async function deleteAttendance(req, res) {
     const { studentId, date } = req.body;
     try {
-        const studentExists = await Student.findById(studentId);
+        const studentExists = await studentDao.findById(studentId);
         if (!studentExists) {
             return res.status(404).send("Student not found.");
         }
         const regex = new RegExp(date);
-        const attendanceRecord = await Attendance.findOneAndUpdate(
-            {studentId: studentId, date: { $regex: regex },},
-            { isDelete: true },
-            { new: true, select: 'updatedAt' }
-
-        );
+        const attendanceRecord = await attendanceDao.delete(studentId, date);
         if (!attendanceRecord || attendanceRecord.isDelete === true) {
             return res.status(404).send("Attendance record not found for the provided date.");
         }

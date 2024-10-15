@@ -4,12 +4,10 @@ const router = express.Router();
 const { authorization, authentication } = require('../middleware/auth.middleware');
 
 
-//user registration 
+//admin login 
+router.post('/check-user', adminController.checkUser);
 router.post('/login', adminController.adminLogin);
+//admin logout
 router.post('/logout', authentication, adminController.adminLogOut);
-
-router.get('/protected', authorization, (req, res) => {
-    res.json({ message: "Authorization Complete" });
-});
 
 module.exports = router;

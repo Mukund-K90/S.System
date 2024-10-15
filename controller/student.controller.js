@@ -1,13 +1,13 @@
 const Student = require("../model/student.model");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { successResponse, errorResponse } = require("../utils/apiResponse");
+const studentDao = require("../dao/studentDao");
 
+
+//insert
 async function insertStudent(req, res) {
     try {
-        const student = await Student.findOne({ email: req.body.email });
-        if (student && student.isDelete === false) {
-            return res.status(400).send("Student already exists.");
-        }
         const {
             firstName,
             lastName,
@@ -19,173 +19,93 @@ async function insertStudent(req, res) {
             guardianDetails,
             address,
         } = req.body;
+
         const { fatherName, fatherOccupation, motherName, motherOccupation } = guardianDetails;
-        if (student && student.isDelete === true) {
-            const updatedStudent = await Student.findOneAndUpdate(
-                { email: email },
-                {
-                    firstName,
-                    lastName,
-                    dob,
-                    gender,
-                    email,
-                    countryCode: `+${countryCode}`,
-                    phone,
-                    guardianDetails: {
-                        fatherName,
-                        fatherOccupation,
-                        motherName,
-                        motherOccupation,
-                    },
-                    address,
-                    isDelete: false,
-                    updatedAt: Date.now(),
-                },
-                { new: true }
-            );
 
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "Student added successfully.",
-                id: updatedStudent._id,
-            });
-        } else {
-        
-            const newStudent = new Student({
-                firstName,
-                lastName,
-                dob,
-                gender,
-                email,
-                countryCode: `+${countryCode}`,
-                phone,
-                guardianDetails: {
-                    fatherName,
-                    fatherOccupation,
-                    motherName,
-                    motherOccupation,
-                },
-                address,
-            });
+        const student = await studentDao.findByEmail(email);
 
-            await newStudent.save();
-            return res.status(201).send({
-                code: 201,
-                success: true,
-                message: "Student added successfully.",
-                id: newStudent._id,
-            });
+        if (student && !student.isDelete) {
+            return successResponse(req, res, 409, "Student already exists.");
         }
+
+        if (student && student.isDelete) {
+            await studentDao.hardDelete({ email: email });
+        }
+        const userData = {
+            firstName,
+            lastName,
+            dob,
+            gender,
+            email,
+            countryCode,
+            phone,
+            guardianDetails: {
+                fatherName,
+                fatherOccupation,
+                motherName,
+                motherOccupation,
+            },
+            address,
+        };
+        const newStudent = await studentDao.insert(userData);
+        if (!newStudent) {
+            return errorResponse(req, res, 500, "student not inserted");
+        }
+        return successResponse(req, res, 200, "Student added successfully.");
     } catch (error) {
         console.error(error);
-        return res.status(500).send({
-            success: false,
-            message: error.message,
-        });
+        return errorResponse(req, res, 500, error.message);
     }
 }
 
 //Update
 async function updateStudent(req, res) {
-    // const token = req.params.token;
-    // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
-    // const user = await Student.findById(decodeToken.userId);
-    const id = req.body.id;
-    const updateData = req.body;
-    const student = await Student.findById(id);
-    if (!student || student.isDelete === true) {
-        return res.status(400).send(`student Not found. Please check and try again`);
-    }
-    else {
-        try {
-            const updatedStudent = await Student.findByIdAndUpdate(
-                id,
-                updateData,
-                { new: true, select: 'updatedAt' }
-            );
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "Student Updated Successfully",
-                data: {
-                    _id: updatedStudent._id,
-                    updatedAt: updatedStudent.updatedAt,
-                }
-            })
-        } catch (error) {
-            res.status(500).send({
-                success: false,
-                message: error.message,
-            });
+    try {
+        const { id, ...updatedData } = req.body;
+
+        const student = await studentDao.findById(id);
+        if (!student || student.isDelete) {
+            return errorResponse(req, res, 401, "student Not found. Please check and try again");
         }
-
+        const updatedStudent = await studentDao.update(id, updatedData);
+        if (!updatedStudent) {
+            return errorResponse(req, res, 500, "student not updated");
+        }
+        return successResponse(req, res, 200, "Student Updated Successfully");
+    } catch (error) {
+        return errorResponse(req, res, error.message);
     }
-
 }
 
 //View
 async function viewStudent(req, res) {
-    // const token = req.params.token;
-    // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
-    // const user = await Student.findById(decodeToken.userId);
-    const id = req.params.id;
-    const student = await Student.findById(id);
-    if (!student || student.isDelete === true) {
-        return res.status(400).send(`student Not found. Please check and try again`);
-    }
-
-    else {
-        try {
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "Student Fetched Successfully",
-                data: {
-                    id: student._id,
-                    name: `${student.firstName} ${student.lastName}`,
-                    dob: student.dob,
-                    gender: student.gender,
-                    email: student.email,
-                    mobile: `${student.countryCode}${student.phone}`,
-                    address: student.address,
-                    guardianDetails: student.guardianDetails
-                }
-            })
-        } catch (error) {
-            res.status(500).send({
-                success: false,
-                message: error.message,
-            });
+    try {
+        const id = req.body.id;
+        const student = await studentDao.findById(id);
+        if (!student || student.isDelete) {
+            return successResponse(req, res, 401, "student Not found. Please check and try again");
         }
-
+        const data = {
+            id: student._id,
+            name: `${student.firstName} ${student.lastName}`,
+            dob: student.dob,
+            gender: student.gender,
+            email: student.email,
+            mobile: `${student.countryCode}${student.phone}`,
+            address: student.address,
+            guardianDetails: student.guardianDetails
+        }
+        return successResponse(req, res, 200, "Student Fetched Successfully", data);
+    } catch (error) {
+        return errorResponse(req, res, error.message);
     }
-
 }
 
 //Fecth Student
 async function fetchStudents(req, res) {
-    // const token = req.params.token;
-    // const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
-    // const user = await Student.findById(decodeToken.userId);
-    // const { firstName, lastName, email, phone } = req.query;
-    // const query = {};
-    // if (firstName) {
-    //     query.firstName = { $regex: firstName, $options: 'i' };
-    // }
-    // if (lastName) {
-    //     query.lastName = { $regex: lastName, $options: 'i' };
-    // }
-    // if (email) {
-    //     query.email = { $regex: email, $options: 'i' };
-    // }
-    // if (phone) {
-    //     query.phone = { $regex: phone, $options: 'i' };
-    // }
-    // if (Object.keys(query).length === 0) {
-    const student = await Student.find().sort({ createdAt: -1 }).where({ isDelete: false });
-    if (!student || student.length === 0 || student.isDelete === true) {
-        return res.status(400).send(`students Not found. Please check and try again`);
+    const student = await studentDao.fetch();
+    if (!student || student.length === 0 || student.isDelete) {
+        return errorResponse(req, res, 401, "students Not found. Please check and try again");
     }
     const formattedStudents = student.map(s => ({
         id: s._id,
@@ -197,70 +117,28 @@ async function fetchStudents(req, res) {
         address: s.address,
     }));
     try {
-        return res.status(200).send({
-            code: 200,
-            success: true,
-            message: `Student List fetched Successfully`,
-            data: formattedStudents
-        })
+        return successResponse(req, res, 200, "Student Fetched Successfully", formattedStudents);
+
     } catch (error) {
         res.status(500).send({
             success: false,
             message: error.message,
         });
     }
-    // }
-
-    // else {
-    //     const student = await Student.find(query).sort({ createdAt: -1 });
-    //     if (!student || student.length === 0) {
-    //         return res.status(400).send(`student Not found matching the criteria.`);
-    //     }
-    //     try {
-    //         return res.status(200).send({
-    //             code: 200,
-    //             success: true,
-    //             message: `Student Searched Successfully`,
-    //             data: student
-    //         })
-    //     } catch (error) {
-    //         res.status(500).send({
-    //             success: false,
-    //             message: error.message,
-    //         });
-    //     }
-
-    // }
-
 }
 
 //Delete
 async function deleteStudent(req, res) {
-    const id = req.params.id;
-    const student = await Student.findByIdAndUpdate(
-        id,
-        { isDelete: true },
-        { new: true, select: 'updatedAt' }
-    ); if (!student || student.isDelete === true) {
-        return res.status(400).send(`student Not found. Please check and try again`);
-    }
-    else {
-        try {
-            return res.status(200).send({
-                code: 200,
-                success: true,
-                message: "Student Deleted Successfully",
-                data: {
-                    id: id
-                }
-            })
-        } catch (error) {
-            res.status(500).send({
-                success: false,
-                message: error.message,
-            });
+    try {
+        const id = req.body.id;
+        const student = await studentDao.findById(id);
+        if (!student || student.isDelete) {
+            return res.status(400).send(`student Not found. Please check and try again`);
         }
-
+        const deletedStudent = await studentDao.delete(id);
+        return successResponse(req, res, 200, "Student Deleted Successfully", deletedStudent);
+    } catch (error) {
+        errorResponse(req, res, error.message);
     }
 }
 
