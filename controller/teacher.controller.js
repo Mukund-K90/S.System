@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Teacher = require('../model/teacher.model');
 const { errorResponse, successResponse } = require('../utils/apiResponse');
-const teacherDao = require('../dao/teacherDao');
+const teacherDao = require('../dao/teacherDaos');
 
 //Insert Student
 async function insertTeacher(req, res) {

@@ -1,4 +1,4 @@
-const Teacher = require("../model/Teacher.model");
+const Teacher = require("../model/teacher.model");
 
 //findBy Email
 module.exports.findByEmail = async (email) => {
