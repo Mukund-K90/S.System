@@ -6,7 +6,7 @@ const { validate } = require('../middleware/schemaValidate.middleware');
 const router = express.Router();
 
 //user registration 
-router.post('/registration', authentication, validate(studentValidator.addStudent.body), studentController.insertStudent);
+router.post('/registration', validate(studentValidator.addStudent.body), studentController.insertStudent);
 router.put('/update', authentication, studentController.updateStudent);
 router.post('/view', authentication, studentController.viewStudent);
 router.get('/list', authentication, studentController.fetchStudents);

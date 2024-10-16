@@ -9,6 +9,8 @@ async function checkUser(req, res) {
     try {
         const { email } = req.body;
         const admin = await adminDao.findAdminByEmail(email);
+        console.log(email);
+        console.log(admin);
         if (!admin) {
             return errorResponse(req, res, 401, "Invalid user. Please check & try again");
         }
