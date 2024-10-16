@@ -1,6 +1,6 @@
 const Attendance = require("../model/attendance.model.js");
 const Student = require("../model/student.model");
-const Teacher = require("../model/Teacher.model");
+const Teacher = require("../model/teacher.model");
 const { format, parse, isBefore } = require('date-fns');
 const studentDao = require('../dao/studentDao.js');
 const teacherDao = require('../dao/teacherDao.js');
